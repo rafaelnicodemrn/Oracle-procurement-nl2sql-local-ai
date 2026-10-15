@@ -245,6 +245,9 @@ if __name__ == "__main__":
         sys.exit(f"Modelo não instalado. Rode: ollama pull {config.LLM_MODELO}")
     pergunta = " ".join(sys.argv[1:]) or "Quantas ordens de compra foram criadas em 2026?"
     print(f"\nPergunta: {pergunta}\nGerando SQL (a primeira chamada carrega o modelo e demora mais)...\n")
-    r = gerar_sql(pergunta)
+    try:
+        r = gerar_sql(pergunta)
+    except IAIndisponivel as e:
+        sys.exit(str(e))
     print(r.texto)
     print(f"\nTokens: {r.tokens_entrada} entrada, {r.tokens_saida} saída · {r.latencia_s:.1f} s")

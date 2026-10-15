@@ -43,14 +43,22 @@ Se a camada 1 falhar e a IA gerar um comando perigoso, a camada 2 ainda impede a
 |---|---|---|
 | Servidor | `http://127.0.0.1:11434` | `OLLAMA_URL` |
 | Modelo | `qwen2.5-coder:7b` | `LLM_MODELO` |
-| Tempo máximo por chamada | 300 s | `OLLAMA_TIMEOUT` |
+| Tempo máximo por chamada | 600 s | `OLLAMA_TIMEOUT` |
 | Janela de contexto | 8192 tokens (o prompt com o schema passa de 2.000) | `OLLAMA_NUM_CTX` |
 | Modelo carregado na memória | 30 min após a última chamada | `OLLAMA_KEEP_ALIVE` |
 
 - Temperatura 0 e semente fixa, para reduzir a variação do SQL entre execuções
 - Trava de segurança: o `llm.py` recusa `OLLAMA_URL` fora de localhost ou de IP de rede privada e modelos `*-cloud` do Ollama. Para usar um servidor interno com nome, defina `OLLAMA_PERMITIR_REMOTO=true`
 - Modelos com raciocínio (ex: família qwen3): o bloco `<think>` é removido da resposta; `OLLAMA_THINK=false` desliga o modo pensamento
-- Sem GPU dedicada, o modelo roda na CPU. A primeira pergunta carrega o modelo e demora mais. As seguintes reaproveitam o prompt já processado. Para mais velocidade, troque para `qwen2.5-coder:3b` e meça a acurácia de novo
+- Sem GPU dedicada, o modelo roda na CPU. Medição em notebook Intel i5-1335U com 16 GB, Ollama no Docker e `qwen2.5-coder:7b` (15/10/2026):
+
+  | Chamada | Tempo | Tokens (entrada / saída) |
+  |---|---|---|
+  | Primeira, carregando o modelo | mais de 300 s | 2.059 / 169 |
+  | Seguinte, SQL com junções | 78 s | 2.057 / 147 |
+  | Seguinte, SQL simples | 18 s | 2.052 / 36 |
+
+  O tempo cresce com o tamanho do SQL gerado (cerca de 2 tokens por segundo). Para mais velocidade, troque para `qwen2.5-coder:3b` e meça a acurácia de novo
 - Uso registrado em `dados/uso_llm.csv` (tokens e latência). Custo por chamada: zero
 
 ## Resultados da avaliação

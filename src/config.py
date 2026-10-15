@@ -28,8 +28,9 @@ MAX_ROWS = int(os.getenv("MAX_ROWS", "200"))
 # IA local (Ollama). Nenhuma chamada sai para IA na nuvem.
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
 LLM_MODELO = os.getenv("LLM_MODELO", "qwen2.5-coder:7b")
-# CPU sem GPU dedicada: a primeira chamada carrega o modelo na memória e pode levar minutos
-OLLAMA_TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "300"))
+# CPU sem GPU dedicada: a primeira chamada carrega o modelo e processa o schema inteiro.
+# Medido em notebook i5 com Docker: mais de 300 s na primeira chamada, cerca de 150 s nas seguintes
+OLLAMA_TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "600"))
 # Janela de contexto: o prompt com o schema curado passa de 2.000 tokens; o padrão do Ollama cortaria o prompt
 OLLAMA_NUM_CTX = int(os.getenv("OLLAMA_NUM_CTX", "8192"))
 # Tempo que o modelo fica carregado na memória depois da última chamada

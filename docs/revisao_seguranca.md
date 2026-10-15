@@ -32,7 +32,7 @@ O Gemini foi substituído por um modelo local servido pelo Ollama (`src/llm.py`)
 - **C1, limitações 4 e 6 deixam de existir:** sem custo por chamada, sem teto de gasto e sem limite 429.
   O registro de uso (tokens e latência) fica em `dados/uso_llm.csv`.
 - **Novo risco operacional:** o modelo roda na CPU. A primeira chamada carrega o modelo e pode levar
-  minutos (`OLLAMA_TIMEOUT`, 300 s). A API continua atendendo uma pergunta por vez.
+  minutos (`OLLAMA_TIMEOUT`, 600 s). A API continua atendendo uma pergunta por vez.
 - Os achados abaixo continuam válidos: os guardrails não dependem do modelo usado.
 
 O texto abaixo é a revisão original de 06/10/2026, feita com o Gemini.
