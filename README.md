@@ -111,11 +111,10 @@ Oracle-procurement-nl2sql-local-ai\
 
 ## Instalação (Windows)
 
-1. Instale o Ollama em https://ollama.com/download e baixe o modelo:
+1. Suba o Ollama. Há dois caminhos:
 
-   ```powershell
-   ollama pull qwen2.5-coder:7b
-   ```
+   - **Instalador nativo:** instale em https://ollama.com/download e rode `ollama pull qwen2.5-coder:7b`
+   - **Docker** (para máquinas em que o instalador é bloqueado): com o Docker Desktop instalado, rode `scripts\iniciar_ollama_docker.bat`. Ele cria o container `ollama` com a porta 11434 aberta só para a própria máquina (`127.0.0.1`), reinício automático e volume para os modelos, e baixa o `qwen2.5-coder:7b`. Para outro modelo: `scripts\iniciar_ollama_docker.bat qwen2.5-coder:3b`
 
 2. Instale o projeto:
 
@@ -136,6 +135,7 @@ Oracle-procurement-nl2sql-local-ai\
 | Atalho | O que faz |
 |---|---|
 | `demo.bat` | Sobe a tela em http://127.0.0.1:8000 e abre o navegador quando `/health` responder |
+| `scripts\iniciar_ollama_docker.bat` | Sobe o Ollama no Docker e baixa o modelo (alternativa ao instalador) |
 | `scripts\testar_ia.bat` | Confere o Ollama e o modelo e gera um SQL de exemplo (não acessa o Oracle) |
 | `scripts\testar_conexao.bat` | Testa a conexão com o Fusion (1 chamada ao BIP) |
 | `scripts\testar.bat` | Roda os testes automatizados, sem IA nem Oracle |
