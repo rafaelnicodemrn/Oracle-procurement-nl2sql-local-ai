@@ -42,23 +42,25 @@ Se a camada 1 falhar e a IA gerar um comando perigoso, a camada 2 ainda impede a
 | Item | Valor padrão | Onde mudar |
 |---|---|---|
 | Servidor | `http://127.0.0.1:11434` | `OLLAMA_URL` |
-| Modelo | `qwen2.5-coder:7b` | `LLM_MODELO` |
+| Modelo | `qwen2.5-coder:3b` | `LLM_MODELO` |
 | Tempo máximo por chamada | 600 s | `OLLAMA_TIMEOUT` |
 | Janela de contexto | 8192 tokens (o prompt com o schema passa de 2.000) | `OLLAMA_NUM_CTX` |
 | Modelo carregado na memória | 30 min após a última chamada | `OLLAMA_KEEP_ALIVE` |
+| Threads da CPU | padrão do Ollama | `OLLAMA_NUM_THREAD` |
 
 - Temperatura 0 e semente fixa, para reduzir a variação do SQL entre execuções
 - Trava de segurança: o `llm.py` recusa `OLLAMA_URL` fora de localhost ou de IP de rede privada e modelos `*-cloud` do Ollama. Para usar um servidor interno com nome, defina `OLLAMA_PERMITIR_REMOTO=true`
 - Modelos com raciocínio (ex: família qwen3): o bloco `<think>` é removido da resposta; `OLLAMA_THINK=false` desliga o modo pensamento
-- Sem GPU dedicada, o modelo roda na CPU. Medição em notebook Intel i5-1335U com 16 GB, Ollama no Docker e `qwen2.5-coder:7b` (15/10/2026):
+- Sem GPU dedicada, o modelo roda na CPU. Medições em notebook Intel i5-1335U com 16 GB e Ollama no Docker (8 CPUs e 5,8 GB para o Docker), em 15/10/2026:
 
-  | Chamada | Tempo | Tokens (entrada / saída) |
-  |---|---|---|
-  | Primeira, carregando o modelo | mais de 300 s | 2.059 / 169 |
-  | Seguinte, SQL com junções | 78 s | 2.057 / 147 |
-  | Seguinte, SQL simples | 18 s | 2.052 / 36 |
+  | Modelo | Geração | SQL com junções, modelo já carregado | Primeira chamada |
+  |---|---|---|---|
+  | `qwen2.5-coder:7b` | cerca de 2 tokens/s | 78 s | mais de 300 s |
+  | `qwen2.5-coder:3b` (padrão) | 6 a 7 tokens/s | cerca de 20 s | cerca de 2 min |
+  | `qwen3.5:4b` | cerca de 1,5 token/s | 95 s | 183 s |
 
-  O tempo cresce com o tamanho do SQL gerado (cerca de 2 tokens por segundo). Para mais velocidade, troque para `qwen2.5-coder:3b` e meça a acurácia de novo
+  O tempo cresce com o tamanho do SQL gerado. Nas perguntas seguintes à primeira, o schema já processado é reaproveitado (o qwen3.5 não reaproveita no Ollama em CPU, por isso é mais lento mesmo sendo menor).
+- Threads (`scripts\medir_threads.bat`, `qwen2.5-coder:3b`): padrão 6,70 tokens/s; 8 threads 6,40; 6 threads 7,44; 4 threads 6,22; 2 threads 5,54. A diferença entre 4 e 8 threads fica perto do ruído: o limite é a memória, não o número de núcleos
 - Uso registrado em `dados/uso_llm.csv` (tokens e latência). Custo por chamada: zero
 
 ## Resultados da avaliação
@@ -121,8 +123,8 @@ Oracle-procurement-nl2sql-local-ai\
 
 1. Suba o Ollama. Há dois caminhos:
 
-   - **Instalador nativo:** instale em https://ollama.com/download e rode `ollama pull qwen2.5-coder:7b`
-   - **Docker** (para máquinas em que o instalador é bloqueado): com o Docker Desktop instalado, rode `scripts\iniciar_ollama_docker.bat`. Ele cria o container `ollama` com a porta 11434 aberta só para a própria máquina (`127.0.0.1`), reinício automático e volume para os modelos, e baixa o `qwen2.5-coder:7b`. Para outro modelo: `scripts\iniciar_ollama_docker.bat qwen2.5-coder:3b`
+   - **Instalador nativo:** instale em https://ollama.com/download e rode `ollama pull qwen2.5-coder:3b`
+   - **Docker** (para máquinas em que o instalador é bloqueado): com o Docker Desktop instalado, rode `scripts\iniciar_ollama_docker.bat`. Ele cria o container `ollama` com a porta 11434 aberta só para a própria máquina (`127.0.0.1`), reinício automático e volume para os modelos, e baixa o `qwen2.5-coder:3b`. Para outro modelo: `scripts\iniciar_ollama_docker.bat qwen2.5-coder:7b`
 
 2. Instale o projeto:
 
@@ -145,6 +147,7 @@ Oracle-procurement-nl2sql-local-ai\
 | `demo.bat` | Sobe a tela em http://127.0.0.1:8000 e abre o navegador quando `/health` responder |
 | `scripts\iniciar_ollama_docker.bat` | Sobe o Ollama no Docker e baixa o modelo (alternativa ao instalador) |
 | `scripts\testar_ia.bat` | Confere o Ollama e o modelo e gera um SQL de exemplo (não acessa o Oracle) |
+| `scripts\medir_threads.bat` | Mede a velocidade da IA local com diferentes números de threads (não acessa o Oracle) |
 | `scripts\testar_conexao.bat` | Testa a conexão com o Fusion (1 chamada ao BIP) |
 | `scripts\testar.bat` | Roda os testes automatizados, sem IA nem Oracle |
 | `scripts\perguntar.bat` | Pergunta pelo terminal (usa IA local e Oracle) |

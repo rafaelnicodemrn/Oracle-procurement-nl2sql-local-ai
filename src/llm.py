@@ -151,6 +151,8 @@ def _chamar_sem_trava(instrucao: str, conteudo: str, tipo: str) -> RespostaLLM:
     }
     if config.OLLAMA_THINK is not None:
         payload["think"] = config.OLLAMA_THINK
+    if config.OLLAMA_NUM_THREAD > 0:
+        payload["options"]["num_thread"] = config.OLLAMA_NUM_THREAD
 
     inicio = time.perf_counter()
     try:

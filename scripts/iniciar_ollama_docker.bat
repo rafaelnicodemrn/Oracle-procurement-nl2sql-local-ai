@@ -1,10 +1,10 @@
 @echo off
 rem Sobe o Ollama num container Docker e baixa o modelo.
 rem Alternativa para maquinas em que o instalador do Ollama nao pode ser usado.
-rem Uso: scripts\iniciar_ollama_docker.bat [modelo]   padrao: qwen2.5-coder:7b
+rem Uso: scripts\iniciar_ollama_docker.bat [modelo]   padrao: qwen2.5-coder:3b
 setlocal
 set "MODELO=%~1"
-if "%MODELO%"=="" set "MODELO=qwen2.5-coder:7b"
+if "%MODELO%"=="" set "MODELO=qwen2.5-coder:3b"
 
 docker info >nul 2>&1
 if not errorlevel 1 goto docker_ok

@@ -7,7 +7,7 @@ Fluxo: pergunta → IA local (Ollama) gera SQL (com `schema_curado.md`) → `gua
 
 ## Ambiente
 - Windows, PowerShell, Python 3.12 em `.venv` (rodar sempre `.venv\Scripts\python.exe`, sem activate)
-- IA local: Ollama em `http://127.0.0.1:11434`, modelo padrão `qwen2.5-coder:7b` (`LLM_MODELO` no `.env`). Nesta máquina o instalador do Ollama é bloqueado pela política da empresa: o Ollama roda no Docker Desktop (container `ollama`, criado por `scripts\iniciar_ollama_docker.bat`)
+- IA local: Ollama em `http://127.0.0.1:11434`, modelo padrão `qwen2.5-coder:3b` (`LLM_MODELO` no `.env`). Nesta máquina o instalador do Ollama é bloqueado pela política da empresa: o Ollama roda no Docker Desktop (container `ollama`, criado por `scripts\iniciar_ollama_docker.bat`)
 - Atalhos: `demo.bat` na raiz (uvicorn na porta 8000, com `--app-dir src`) e, em `scripts\`, `testar_ia.bat`, `perguntar.bat`, `avaliar.bat`, `uso_ia.bat`, `testar.bat`, `testar_conexao.bat`
 - Dependências em `requirements.txt`. Não adicionar dependências pesadas; o Ollama é chamado por HTTP com `requests`. Frontend sem build (HTML, CSS e JS puros em `src/static/`)
 - Repositório Git público: https://github.com/rafaelnicodemrn/Oracle-procurement-nl2sql-local-ai

@@ -230,6 +230,15 @@ def test_think_so_e_enviado_quando_configurado(monkeypatch):
     assert "think" not in enviados[0] and enviados[1]["think"] is False
 
 
+def test_num_thread_so_e_enviado_quando_configurado(monkeypatch):
+    enviados = []
+    monkeypatch.setattr(llm, "_post", lambda c, p, t: enviados.append(p) or _resposta_http())
+    llm.gerar_sql("x")
+    monkeypatch.setattr(config, "OLLAMA_NUM_THREAD", 4)
+    llm.gerar_sql("x")
+    assert "num_thread" not in enviados[0]["options"] and enviados[1]["options"]["num_thread"] == 4
+
+
 def test_bloco_de_raciocinio_e_removido(monkeypatch):
     monkeypatch.setattr(llm, "_post", lambda c, p, t: _resposta_http(
         conteudo="<think>vou usar po_headers_all</think>\nSELECT 1 FROM dual"))
