@@ -1,0 +1,41 @@
+# ── Segredos: nunca versionar ────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Dados reais da empresa: ficam só na máquina local ─────────────────────────
+# Gabaritos com nomes de fornecedores e compradores, resultados das avaliações,
+# documentos com valores reais e a apresentação. O exemplo público é
+# avaliacao/gabarito_exemplo.json.
+dados/
+avaliacao/resultados/
+avaliacao/gabarito.json
+avaliacao/gabarito_teste.json
+docs/checklist_testes_manuais.md
+docs/revisao_gabarito.md
+docs/roteiro_demo.md
+._apresentacao/
+*.pptx
+*.xlsx
+*.csv
+
+# ── Configuração local de ferramentas ────────────────────────────────────────
+.claude/settings.local.json
+.vscode/
+.idea/
+
+# ── Python ───────────────────────────────────────────────────────────────────
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+*.bak
+
+# ── Sistema ──────────────────────────────────────────────────────────────────
+Thumbs.db
+desktop.ini
+.DS_Store

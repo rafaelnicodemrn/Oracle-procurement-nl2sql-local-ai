@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Consulta de Compras</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f6f4a'/%3E%3Cpath d='M9 10h14M9 16h14M9 22h8' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f3f5f2; --card: #ffffff; --ink: #1d2320; --muted: #5f6862;
+    --line: #dfe3de; --accent: #1f6f4a; --accent-ink: #ffffff; --accent-soft: #e4f1ea;
+    --ok: #1f6f4a; --warn: #a15c00; --bad: #b3261e; --bad-soft: #fdecea; --warn-soft: #fff4e0;
+    --code: #eef1ed; --kw: #1f5fa8; --str: #a3481f; --num: #7a3fa0;
+  }
+  :root[data-tema="escuro"] {
+    --bg: #121714; --card: #1a211d; --ink: #e6ebe7; --muted: #9aa59d;
+    --line: #2b352f; --accent: #3fa874; --accent-ink: #0c1410; --accent-soft: #1d3327;
+    --ok: #4cc08a; --warn: #e0a13a; --bad: #ff8a80; --bad-soft: #3a1f1d; --warn-soft: #3a2e17;
+    --code: #141a16; --kw: #7ab4f5; --str: #e6a27a; --num: #c99be8;
+  }
+  * { box-sizing: border-box; }
+  html, body { max-width: 100%; overflow-x: hidden; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { background: var(--accent); color: var(--accent-ink); }
+  header .in { max-width: 1280px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+  header h1 { font-size: 18px; margin: 0; letter-spacing: -0.01em; }
+  header .sub { font-size: 12.5px; opacity: .85; }
+  header .esp { flex: 1; }
+  .tema { background: transparent; border: 1px solid currentColor; color: inherit; padding: 5px 10px;
+          font-size: 13px; font-weight: 500; border-radius: 8px; }
+  .layout { max-width: 1280px; margin: 0 auto; padding: 18px 20px 24px; display: grid;
+            grid-template-columns: 240px minmax(0, 1fr); gap: 18px; align-items: start; }
+  .layout > *, main, .card, details { min-width: 0; }
+  main, .card { max-width: 100%; }
+  aside { position: sticky; top: 12px; }
+  aside h2, .grupo h3 { font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 6px; }
+  #hist { display: flex; flex-direction: column; gap: 4px; max-height: 60vh; overflow-y: auto; }
+  #hist button { text-align: left; font-weight: 400; font-size: 13px; padding: 6px 8px; background: var(--card);
+                 color: var(--ink); border: 1px solid var(--line); border-radius: 8px; display: flex; gap: 6px; }
+  #hist button:hover { border-color: var(--accent); }
+  #hist .vazio { color: var(--muted); font-size: 13px; }
+  .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; margin-top: 7px; background: var(--ok); }
+  .dot.bad { background: var(--bad); } .dot.warn { background: var(--warn); }
+  form { display: flex; gap: 8px; }
+  input { flex: 1; min-width: 0; padding: 11px 14px; border: 1px solid var(--line); border-radius: 10px;
+          font: inherit; background: var(--card); color: var(--ink); }
+  input:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button { padding: 10px 18px; border: 0; border-radius: 10px; background: var(--accent);
+           color: var(--accent-ink); font: inherit; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  .exemplos { margin: 12px 0 16px; display: grid; gap: 8px; }
+  .grupo { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .grupo h3 { width: 100%; margin: 2px 0 0; }
+  .ex { background: var(--card); color: var(--ink); border: 1px solid var(--line);
+        font-weight: 400; font-size: 13px; padding: 5px 10px; border-radius: 99px; }
+  .ex:hover:not(:disabled) { border-color: var(--accent); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  .badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 99px; color: #fff; margin-bottom: 8px; }
+  .b-ok { background: var(--ok); } .b-bloqueado, .b-erro_execucao, .b-erro { background: var(--bad); }
+  .b-sql_invalido, .b-sem_resposta, .b-ocupado { background: var(--warn); }
+  :root[data-tema="escuro"] .badge { color: #0c1410; }
+  .resposta { font-size: 17px; margin: 0; }
+  .bloqueio { border: 2px solid var(--bad); background: var(--bad-soft); }
+  .bloqueio h2 { margin: 0 0 4px; font-size: 18px; color: var(--bad); }
+  .bloqueio ul { margin: 8px 0 0; padding-left: 20px; }
+  .aviso { border: 1px solid var(--warn); background: var(--warn-soft); }
+  .erro-txt { color: var(--bad); margin: 6px 0 0; }
+  details > summary { cursor: pointer; font-weight: 600; }
+  .barra { display: flex; gap: 8px; margin: 8px 0; }
+  .barra button { background: var(--card); color: var(--ink); border: 1px solid var(--line); font-weight: 500; font-size: 12.5px; padding: 4px 10px; border-radius: 8px; }
+  pre { background: var(--code); padding: 12px; border-radius: 8px; overflow-x: auto; margin: 0;
+        font: 13px/1.45 ui-monospace, Consolas, monospace; white-space: pre-wrap; }
+  .kw { color: var(--kw); font-weight: 600; } .st { color: var(--str); } .nu { color: var(--num); }
+  .tabela { overflow-x: auto; overflow-y: auto; max-width: 100%; max-height: 340px; border: 1px solid var(--line); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { position: sticky; top: 0; background: var(--card); color: var(--muted); font-weight: 600; }
+  td.n { text-align: right; font-variant-numeric: tabular-nums; } th.n { text-align: right; }
+  dl.t { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; margin: 8px 0 0; font-size: 13px; }
+  dl.t dt { color: var(--muted); } dl.t dd { margin: 0; }
+  .etapas { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+  .etapas li { color: var(--muted); font-size: 14px; }
+  .etapas li.feito { color: var(--ok); } .etapas li.feito::before { content: "\2713 "; }
+  .etapas li.atual { color: var(--ink); font-weight: 600; }
+  .etapas li.atual::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 6px;
+        border: 2px solid var(--accent); border-right-color: transparent; border-radius: 50%; animation: gira .8s linear infinite; }
+  @keyframes gira { to { transform: rotate(360deg); } }
+  @media (max-width: 860px) { .layout { grid-template-columns: minmax(0, 1fr); } aside { position: static; } #hist { max-height: 160px; } }
+  @media (max-height: 800px) { .layout { padding-top: 12px; } .card { padding: 13px; margin-bottom: 10px; } .resposta { font-size: 16px; } }
+  @media (prefers-reduced-motion: reduce) { .etapas li.atual::before { animation: none; } }
+</style>
+</head>
+<body>
+<header><div class="in">
+  <div><h1>Consulta de Compras em linguagem natural</h1>
+  <div class="sub">Oracle Fusion Procurement · pergunta em português, resposta com os dados reais</div></div>
+  <span class="esp"></span>
+  <button class="tema" id="tema" type="button" aria-label="Alternar tema claro e escuro">Tema escuro</button>
+</div></header>
+
+<div class="layout">
+  <aside>
+    <h2>Histórico da sessão</h2>
+    <div id="hist"><span class="vazio">Nenhuma pergunta ainda.</span></div>
+  </aside>
+  <main>
+    <form id="f">
+      <input id="q" placeholder="Ex: Qual o valor total de ordens compradas em 2026?" autocomplete="off" required maxlength="500">
+      <button id="b" type="submit">Perguntar</button>
+    </form>
+    <div class="exemplos" id="ex"></div>
+    <div id="prog"></div>
+    <div id="out"></div>
+  </main>
+</div>
+
+<script>
+const GRUPOS = [
+  {nome: "Exemplos de perguntas", itens: [
+    "Quantos pedidos de compra foram criados em 2026?",
+    "Qual o valor total de ordens compradas em 2026?",
+    "Qual o preço pago no produto 906065 nas últimas 3 compras?",
+    "Quais os 5 fornecedores com maior valor comprado em 2026?",
+    "Qual o valor total comprado por categoria de item em 2026?",
+    "Como evoluiu o preço médio do item 906065 mês a mês em 2026?"]},
+];
+const ETAPAS = ["Entendendo a pergunta", "Verificando segurança", "Consultando os dados", "Montando a resposta"];
+const MSG_RECUSA = "Este sistema só consulta informações. Não é possível alterar ou apagar dados.";
+const MSG_BLOQUEIO = "Não foi possível atender a este pedido com segurança. Tente reformular a pergunta.";
+const MSG_SEM_RESPOSTA = "Não consegui responder a esta pergunta. Tente reformular com mais detalhes.";
+const ROTULO = {ok: "Respondido", bloqueado: "Pedido não atendido", sql_invalido: "Sem resposta",
+                erro_execucao: "Sem resposta", sem_resposta: "Sem resposta", erro: "Erro"};
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+let ocupado = false, ultimo = null, historico = [];
+
+// ---------- tema ----------
+function aplicarTema(t) {
+  document.documentElement.dataset.tema = t;
+  $("tema").textContent = t === "escuro" ? "Tema claro" : "Tema escuro";
+}
+let temaInicial = "claro";
+try { temaInicial = localStorage.getItem("tema") || (matchMedia("(prefers-color-scheme: dark)").matches ? "escuro" : "claro"); } catch (e) {}
+aplicarTema(temaInicial);
+$("tema").onclick = () => {
+  const t = document.documentElement.dataset.tema === "escuro" ? "claro" : "escuro";
+  aplicarTema(t);
+  try { localStorage.setItem("tema", t); } catch (e) {}
+};
+
+// FORMATACAO-INICIO
+// ---------- formatação ----------
+const fNum = new Intl.NumberFormat("pt-BR", {maximumFractionDigits: 4});
+const fInt = new Intl.NumberFormat("pt-BR", {maximumFractionDigits: 0});
+const fMoeda = new Intl.NumberFormat("pt-BR", {style: "currency", currency: "BRL"});
+const reMoeda = /(valor|preco|preço|custo|amount|price)/i;
+const reContagem = /(qtd|quantidade|count|total_pedidos|total_ordens|^total_)/i;
+const reCodigo = /(^id$|_id$|^id_|codigo|código|numero|número|segment|item|cnpj|cpf|nf$)/i;
+const reNum = /^-?\d+(\.\d+)?$/;
+const dec = (n, d) => Number(n).toLocaleString("pt-BR", {minimumFractionDigits: d, maximumFractionDigits: d});
+function pad(n) { return String(n).padStart(2, "0"); }
+function fmtData(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/.exec(s);
+  if (!m) return null;
+  const hora = m[4] && !(m[4] === "00" && m[5] === "00") ? ` ${m[4]}:${m[5]}` : "";
+  return `${m[3]}/${m[2]}/${m[1]}${hora}`;
+}
+// devolve {txt, num}
+function fmtValor(col, v) {
+  if (v === null || v === undefined || v === "") return {txt: "", num: false};
+  if (typeof v === "string") {
+    const d = fmtData(v);
+    if (d) return {txt: d, num: false};
+  }
+  const ehNum = typeof v === "number" || (typeof v === "string" && reNum.test(v));
+  if (ehNum && !reCodigo.test(col)) {
+    const n = Number(v);
+    if (reMoeda.test(col)) return {txt: fMoeda.format(n), num: true};
+    if (reContagem.test(col) && Number.isInteger(n)) return {txt: fInt.format(n), num: true};
+    return {txt: fNum.format(n), num: true};
+  }
+  return {txt: String(v), num: false};
+}
+const reDestrutiva = /\b(apag\w*|exclu\w*|delet\w*|alter(ar|e|em)|atualiz\w*|update|drop|ignor\w*\s+(as\s+)?regras)\b/i;
+const ehDestrutiva = q => reDestrutiva.test(q || "");
+// FORMATACAO-FIM
+
+// ---------- destaque de sintaxe ----------
+const KW = "SELECT|FROM|WHERE|JOIN|LEFT|RIGHT|INNER|OUTER|ON|AND|OR|NOT|IN|AS|GROUP|BY|ORDER|HAVING|WITH|FETCH|FIRST|ROWS|ONLY|DESC|ASC|DISTINCT|CASE|WHEN|THEN|ELSE|END|NULL|IS|LIKE|BETWEEN|OVER|PARTITION|UNION|ALL|DATE|INTERVAL";
+const reSql = new RegExp(`('(?:[^']|'')*')|\\b(${KW})\\b|\\b(\\d+(?:\\.\\d+)?)\\b`, "gi");
+function realcar(sql) {
+  let out = "", i = 0, m;
+  reSql.lastIndex = 0;
+  while ((m = reSql.exec(sql))) {
+    out += esc(sql.slice(i, m.index));
+    out += m[1] ? `<span class="st">${esc(m[1])}</span>` : m[2] ? `<span class="kw">${esc(m[2])}</span>` : `<span class="nu">${esc(m[3])}</span>`;
+    i = reSql.lastIndex;
+  }
+  return out + esc(sql.slice(i));
+}
+
+// ---------- tabela, CSV, cópia ----------
+const NOMES_COLUNAS = {
+  numero_ordem: "Número da ordem", numero_oc: "Número da OC", numero_pedido: "Número do pedido",
+  data_criacao: "Data de criação", data_ordem: "Data da ordem", data_emissao: "Data de emissão",
+  data_compra: "Data da compra", data_entrega: "Data de entrega",
+  valor_total: "Valor total", valor_comprado: "Valor comprado", valor_linha: "Valor da linha",
+  valor_ordem: "Valor da ordem", valor: "Valor", preco_unitario: "Preço unitário",
+  preco_medio: "Preço médio", preco_pago: "Preço pago", preco: "Preço",
+  quantidade: "Quantidade", qtd: "Quantidade", total_ordens: "Total de ordens",
+  total_pedidos: "Total de pedidos", total_compras: "Total de compras",
+  fornecedor: "Fornecedor", nome_fornecedor: "Nome do fornecedor", codigo_fornecedor: "Código do fornecedor",
+  comprador: "Comprador", nome_comprador: "Nome do comprador", categoria: "Categoria",
+  nome_categoria: "Nome da categoria", codigo_item: "Código do item", item: "Item",
+  descricao: "Descrição", descricao_item: "Descrição do item", unidade: "Unidade",
+  situacao: "Situação", status: "Status", mes: "Mês", ano: "Ano", numero_linha: "Número da linha"
+};
+// Fallback para colunas fora do mapa. Manter igual a resposta.py (ACENTOS, PREFIXOS_DE, SEM_DE).
+const ACENTOS = {
+  numero: "número", descricao: "descrição", criacao: "criação", emissao: "emissão",
+  preco: "preço", unitario: "unitário", codigo: "código", media: "média", medio: "médio",
+  mes: "mês", situacao: "situação", organizacao: "organização", requisicao: "requisição",
+  ultima: "última", ultimo: "último", qtd: "quantidade"
+};
+const PREFIXOS_DE = ["total", "qtd", "quantidade", "valor", "numero", "data"];
+const SEM_DE = ["total", "medio", "media", "unitario", "unitaria", "maximo", "maxima", "minimo", "minima",
+  "pago", "paga", "comprado", "comprada", "liquido", "liquida", "bruto", "bruta", "atual", "anterior", "geral",
+  "final", "inicial", "parcial", "estimado", "estimada", "restante", "amount", "de", "da", "do", "das", "dos",
+  "em", "na", "no", "por", "para", "com"];
+function nomeColuna(c) {
+  const k = String(c).toLowerCase();
+  if (Object.prototype.hasOwnProperty.call(NOMES_COLUNAS, k)) return NOMES_COLUNAS[k];
+  const p = k.split("_").filter(Boolean);
+  if (!p.length) return String(c);
+  if (p.length > 1 && PREFIXOS_DE.includes(p[0]) && !SEM_DE.includes(p[1]) && !PREFIXOS_DE.includes(p[1])) p.splice(1, 0, "de");
+  const t = p.map(w => ACENTOS[w] || w).join(" ");
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+function tabela(linhas, limitado, maxRows) {
+  if (!linhas.length) return "<p>Nenhum registro.</p>";
+  const cols = Object.keys(linhas[0]);
+  const corpo = linhas.slice(0, 100).map(l => "<tr>" + cols.map(c => {
+    const f = fmtValor(c, l[c]);
+    return `<td class="${f.num ? "n" : ""}">${esc(f.txt)}</td>`;
+  }).join("") + "</tr>").join("");
+  const nums = cols.map(c => fmtValor(c, linhas[0][c]).num);
+  return `<div class="tabela"><table><thead><tr>${cols.map((c, i) => `<th class="${nums[i] ? "n" : ""}">${esc(nomeColuna(c))}</th>`).join("")}</tr></thead><tbody>${corpo}</tbody></table></div>`
+       + (linhas.length > 100 ? `<p class="sub2" style="color:var(--muted);font-size:12.5px">Exibindo 100 de ${linhas.length} linhas. ${limitado ? `O resultado foi limitado a ${maxRows ?? linhas.length} linhas pelo sistema.` : "O CSV traz todas."}</p>` : "");
+}
+function exportarCSV() {
+  if (!ultimo?.linhas?.length) return;
+  const cols = Object.keys(ultimo.linhas[0]);
+  const cel = v => { const s = String(v ?? ""); return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const csv = "﻿" + [cols.join(";"), ...ultimo.linhas.map(l => cols.map(c => cel(l[c])).join(";"))].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], {type: "text/csv;charset=utf-8"}));
+  a.download = "consulta.csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+async function copiarSQL(btn) {
+  if (!ultimo?.sql) return;
+  try { await navigator.clipboard.writeText(ultimo.sql); btn.textContent = "Copiado"; }
+  catch (e) {
+    const t = document.createElement("textarea"); t.value = ultimo.sql; document.body.appendChild(t);
+    t.select(); document.execCommand("copy"); t.remove(); btn.textContent = "Copiado";
+  }
+  setTimeout(() => btn.textContent = "Copiar SQL", 1500);
+}
+
+// ---------- progresso (estimado: a API devolve tudo de uma vez) ----------
+let timers = [];
+function progresso(etapa, falhou) {
+  $("prog").innerHTML = `<div class="card"><ul class="etapas">${ETAPAS.map((e, i) =>
+    `<li class="${i < etapa ? "feito" : i === etapa ? "atual" : ""}">${e}</li>`).join("")}</ul></div>`;
+}
+function iniciarProgresso() {
+  progresso(0);
+  [[1400, 1], [2400, 2], [7000, 3]].forEach(([ms, e]) => timers.push(setTimeout(() => progresso(e), ms)));
+}
+function pararProgresso() { timers.forEach(clearTimeout); timers = []; $("prog").innerHTML = ""; }
+
+// ---------- resultado ----------
+function transparencia(r) {
+  const guard = r.status === "bloqueado" ? "Reprovado" : r.status === "sem_resposta" ? "Não se aplica (sem SQL)"
+              : r.status === "sql_invalido" ? "SQL não pôde ser interpretado" : r.sql ? "Aprovado" : "Não se aplica";
+  const motivos = r.motivos_bloqueio?.length ? `<ul>${r.motivos_bloqueio.map(m => `<li>${esc(m)}</li>`).join("")}</ul>` : "";
+  return `<div class="card"><details><summary>Detalhes técnicos</summary>
+    ${r.sql ? `<div class="barra"><button type="button" id="cp">Copiar SQL</button></div><pre>${realcar(r.sql)}</pre>` : "<p>Nenhum SQL foi gerado.</p>"}
+    <dl class="t">
+      <dt>Validação de segurança</dt><dd>${esc(guard)}${motivos}</dd>
+      <dt>Tentativas</dt><dd>${r.tentativas}</dd>
+      <dt>Latência da IA</dt><dd>${dec(r.latencia_llm_s, 2)} s</dd>
+      <dt>Latência do Oracle</dt><dd>${dec(r.latencia_bip_s, 2)} s</dd>
+      <dt>Tokens</dt><dd>${fNum.format(r.tokens_entrada)} entrada, ${fNum.format(r.tokens_saida)} saída</dd>
+    </dl></details></div>`;
+}
+function render(r) {
+  let topo;
+  if (r.status === "bloqueado") {
+    topo = `<div class="card bloqueio" role="alert"><span class="badge b-bloqueado">${ROTULO.bloqueado}</span>
+      <h2>${MSG_BLOQUEIO}</h2></div>`;
+  } else if (r.status === "sem_resposta" && ehDestrutiva(r.pergunta)) {
+    topo = `<div class="card bloqueio" role="alert"><span class="badge b-bloqueado">${ROTULO.bloqueado}</span>
+      <h2>${MSG_RECUSA}</h2></div>`;
+  } else if (r.status === "ok") {
+    topo = `<div class="card"><span class="badge b-ok">${ROTULO.ok}</span>
+      <p class="resposta">${esc(r.resposta)}</p></div>`;
+  } else {
+    topo = `<div class="card aviso"><span class="badge b-sem_resposta">${esc(ROTULO[r.status] || ROTULO.erro)}</span>
+      <p class="resposta">${MSG_SEM_RESPOSTA}</p></div>`;
+  }
+  const dados = r.status === "ok"
+    ? `<div class="card"><details open><summary>Dados (${r.linhas.length})</summary>
+       <div class="barra"><button type="button" id="csv">Exportar CSV</button></div>${tabela(r.linhas, r.limitado, r.max_rows)}</details></div>` : "";
+  $("out").innerHTML = topo + dados + transparencia(r);
+  if ($("cp")) $("cp").onclick = e => copiarSQL(e.target);
+  if ($("csv")) $("csv").onclick = exportarCSV;
+}
+function cartaoSimples(classe, rotulo, titulo, texto) {
+  $("out").innerHTML = `<div class="card ${classe}" role="alert"><span class="badge b-${classe === "aviso" ? "ocupado" : "erro"}">${rotulo}</span>
+    <p class="resposta">${esc(titulo)}</p>${texto ? `<p class="erro-txt">${esc(texto)}</p>` : ""}</div>`;
+}
+
+// ---------- histórico ----------
+function addHistorico(q, status) {
+  historico = [{q, status}, ...historico.filter(h => h.q !== q)].slice(0, 30);
+  $("hist").innerHTML = historico.map((h, i) => {
+    const cls = h.status === "ok" ? "" : (h.status === "bloqueado" || h.status === "erro" || h.status === "erro_execucao") ? "bad" : "warn";
+    return `<button type="button" data-i="${i}" title="Executar de novo"><span class="dot ${cls}"></span><span>${esc(h.q)}</span></button>`;
+  }).join("");
+  $("hist").querySelectorAll("button").forEach(b => b.onclick = () => perguntar(historico[b.dataset.i].q));
+}
+
+// ---------- envio ----------
+function travar(v) {
+  ocupado = v;
+  $("b").disabled = v; $("b").textContent = v ? "Consultando..." : "Perguntar";
+  document.querySelectorAll(".ex, #hist button").forEach(b => b.disabled = v);
+}
+async function perguntar(q) {
+  q = (q ?? $("q").value).trim();
+  if (!q || ocupado) return;
+  $("q").value = q;
+  travar(true); $("out").innerHTML = ""; iniciarProgresso();
+  try {
+    const resp = await fetch("/perguntar", {method: "POST", headers: {"Content-Type": "application/json"},
+                                            body: JSON.stringify({pergunta: q})});
+    pararProgresso();
+    if (resp.status === 429) {
+      cartaoSimples("aviso", "Consulta em andamento", "Já existe uma consulta em andamento.", "Aguarde o resultado e tente de novo. O sistema atende uma pergunta por vez.");
+      return;
+    }
+    if (resp.status === 422) { cartaoSimples("erro", "Pergunta inválida", "Escreva uma pergunta de até 500 caracteres.", ""); return; }
+    if (!resp.ok) { cartaoSimples("erro", "Erro", MSG_SEM_RESPOSTA, ""); return; }
+    const r = await resp.json();
+    ultimo = r;
+    render(r);
+    addHistorico(q, r.status);
+  } catch (e) {
+    pararProgresso();
+    cartaoSimples("erro", "Erro", "Não foi possível obter a resposta agora.", "Tente novamente em instantes.");
+  } finally {
+    travar(false);
+  }
+}
+
+// ---------- montagem ----------
+$("ex").innerHTML = GRUPOS.map((g, gi) => `<div class="grupo"><h3>${esc(g.nome)}</h3>${
+  g.itens.map((t, i) => `<button type="button" class="ex" data-g="${gi}" data-i="${i}">${esc(t)}</button>`).join("")}</div>`).join("");
+document.querySelectorAll(".ex").forEach(b => b.onclick = () => perguntar(GRUPOS[b.dataset.g].itens[b.dataset.i]));
+$("f").onsubmit = e => { e.preventDefault(); perguntar(); };
+</script>
+</body>
+</html>
